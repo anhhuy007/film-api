@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  db:
+    image: nxt964/sakila-mysql:latest
+    container_name: mysql_db
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      # This is the variable the error message is asking for
+      MYSQL_ROOT_PASSWORD: rootpassword
+
+      # These are still good practice for your app to connect with
+      MYSQL_DATABASE: sakila
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:
