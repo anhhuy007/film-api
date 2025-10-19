@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FilmModule } from './film/film.module';
+import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -14,7 +16,11 @@ import { FilmModule } from './film/film.module';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: false,
     }),
+    ConfigModule.forRoot({
+      isGlobal: true
+    }),
     FilmModule,
+    AuthModule,
   ],
   controllers: [],
   providers: [],
