@@ -1,6 +1,5 @@
 import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { Observable } from "rxjs";
 
 @Injectable()
 export class PartnerApiKeyGuard implements CanActivate {

@@ -4,14 +4,18 @@ import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { CreateFilmDto } from "../dto/create-film.dto";
 import type { Request } from "express";
 import { UpdateFilmDto } from "../dto/update-film.dto";
+import { RolesGuard } from "src/auth/guards/roles.guard";
+import { Roles } from "src/auth/decorators/role.decorator";
+import { Role } from "src/auth/enum/role.enum";
 
 
 @Controller('public/film')
 export class PublicFilmController {
     constructor(private readonly filmService: FilmService) {}
 
-    @UseGuards(JwtAuthGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Post()
+    @Roles(Role.ADMIN)
     create(@Body() createFilmDto: CreateFilmDto, @Req() request: Request) {
         const user = request.user;
         console.log(`Film created by user: `, user);
