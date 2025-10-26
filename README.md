@@ -1,98 +1,190 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+## Hướng dẫn chạy và kiểm thử Film API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Tài liệu này hướng dẫn cách cài đặt, chạy và kiểm thử Film API. Dự án hỗ trợ ba nhóm người dùng chính:
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+* **Internal services** – dịch vụ nội bộ.
+* **Partner** – đối tác nhỏ (dưới 10 người dùng).
+* **Public users** – người dùng công khai đăng nhập qua JWT.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### 1. Cài đặt và chạy ứng dụng
 
-## Project setup
+1. Cài đặt các dependencies:
 
-```bash
-$ npm install
+   ```bash
+   npm install
+   ```
+
+2. Thiết lập các biến môi trường cần thiết (trong file `.env`):
+
+   * `INTERNAL_API_KEY`: API key dành cho các dịch vụ nội bộ.
+   * `CLIENTS_API_KEYS`: JSON object ánh xạ API key của đối tác với tên client.
+     Ví dụ:
+     `{"partner-key-abc": "partnerA", "partner-key-def": "partnerB"}`
+
+3. Chạy ứng dụng ở chế độ phát triển:
+
+   ```bash
+   npm run start:dev
+   ```
+
+   Trước đó cần chạy lệnh docker-compose để start database:
+
+   ```bash
+   docker-compose up -d
+   ```
+
+---
+
+### 2. Danh sách các endpoint chính
+
+Film API được chia thành ba nhóm endpoint theo loại người dùng:
+
+#### **Internal (dành cho dịch vụ nội bộ)**
+
+| Method | Endpoint             | Mô tả              |
+| :----- | :------------------- | :----------------- |
+| POST   | `/internal/film`     | Tạo film mới       |
+| GET    | `/internal/film`     | Lấy danh sách film |
+| GET    | `/internal/film/:id` | Xem chi tiết film  |
+| PATCH  | `/internal/film/:id` | Cập nhật film      |
+| DELETE | `/internal/film/:id` | Xóa film           |
+
+**Authentication:**
+Dùng header:
+`x-api-key: <INTERNAL_API_KEY>`
+
+---
+
+#### **Partner (dành cho đối tác nhỏ)**
+
+| Method | Endpoint            | Mô tả                                        |
+| :----- | :------------------ | :------------------------------------------- |
+| POST   | `/partner/film`     | Tạo film (tự động gán `request.client.name`) |
+| GET    | `/partner/film`     | Lấy danh sách film                           |
+| GET    | `/partner/film/:id` | Xem chi tiết film                            |
+| PATCH  | `/partner/film/:id` | Cập nhật film                                |
+| DELETE | `/partner/film/:id` | Xóa film                                     |
+
+**Authentication:**
+Header:
+`x-api-key: <partner-api-key>`
+(API key ánh xạ qua biến `CLIENTS_API_KEYS` trong config)
+
+---
+
+#### **Public (người dùng đăng nhập bằng JWT)**
+
+| Method | Endpoint           | Mô tả                      |
+| :----- | :----------------- | :------------------------- |
+| POST   | `/public/film`     | Tạo film (chỉ ADMIN)       |
+| GET    | `/public/film`     | Lấy danh sách public       |
+| GET    | `/public/film/:id` | Xem chi tiết (yêu cầu JWT) |
+| PATCH  | `/public/film/:id` | Cập nhật (yêu cầu JWT)     |
+| DELETE | `/public/film/:id` | Xóa (yêu cầu JWT)          |
+
+**Authentication:**
+Header:
+`Authorization: Bearer <accessToken>`
+Token lấy từ endpoint `/auth/login`
+
+---
+
+### 3. Lấy JWT cho public users
+
+Để đăng nhập (hiện đang dùng mock users trong `AuthService`):
+
+**Endpoint:**
+`POST /auth/login`
+
+**Body:**
+
+```json
+{ "username": "admin", "password": "password123" }
 ```
 
-## Compile and run the project
+**Response:**
 
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+```json
+{ "accessToken": "<jwt>" }
 ```
 
-## Run tests
+**Ví dụ sử dụng curl:**
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+curl -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"password123"}'
 ```
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### 4. Ví dụ curl cho từng loại người dùng
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+#### **Internal service**
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+curl -X POST http://localhost:3000/internal/film \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: ${INTERNAL_API_KEY}" \
+  -d '{"title":"Internal Movie","description":"..."}'
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+#### **Partner**
 
-## Resources
+```bash
+curl -X POST http://localhost:3000/partner/film \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: partner-key-abc" \
+  -d '{"title":"Partner Movie","description":"..."}'
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+#### **Public user**
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+# Lấy token
+TOKEN=$(curl -s -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"password123"}' | jq -r .accessToken)
 
-## Support
+# Gọi endpoint với Bearer token
+curl -X POST http://localhost:3000/public/film \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"title":"Public Movie","description":"..."}'
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+> ⚠️ **Lưu ý:**
+> `AuthService` hiện chỉ mock sẵn hai user:
+> `admin/password123` và `john/password456`.
+> Trong môi trường production, thông tin tài khoản user sẽ được lưu trữ trên database.
 
-## Stay in touch
+---
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### 5. Kiểm thử nhanh (Smoke Tests)
 
-## License
+1. **Kiểm tra Internal API key**
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+   ```bash
+   curl -I -s -X GET http://localhost:3000/internal/film \
+     -H "x-api-key: ${INTERNAL_API_KEY}"
+   ```
+
+2. **Kiểm tra Partner API key**
+
+   ```bash
+   curl -I -s -X GET http://localhost:3000/partner/film \
+     -H "x-api-key: partner-key-abc"
+   ```
+
+3. **Kiểm tra đăng nhập và endpoint Public**
+
+   ```bash
+   TOKEN=$(curl -s -X POST http://localhost:3000/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"username":"admin","password":"password123"}' | jq -r .accessToken)
+
+   curl -I -s -X GET http://localhost:3000/public/film \
+     -H "Authorization: Bearer $TOKEN"
+   ```
