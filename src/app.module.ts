@@ -24,10 +24,10 @@ import LokiTransport from 'winston-loki';
         new winston.transports.File({
           dirname: 'logs',                    // thư mục chứa log
           filename: 'app.log.csv',            // file CSV
-          level: 'info',                      // chỉ ghi log >= info
-          maxsize: 20 * 1024 * 1024,          // giới hạn 20MB
+          level: 'info',                      // chỉ ghi log với level 'info' trở lên
+          maxsize: 20 * 1024 * 1024,          // giới hạn file 20MB
           maxFiles: 1,                        // chỉ 1 file
-          tailable: true,                     // tự xoay vòng
+          tailable: true,                     // tự xoay vòng (backup 1 file cũ sau đó ghi đè)
           format: winston.format.combine(
             winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
             winston.format.printf(({ timestamp, message }) => {
@@ -36,13 +36,10 @@ import LokiTransport from 'winston-loki';
           ),
         }),
         new LokiTransport({
-          // Host này là địa chỉ Loki server (sẽ chạy ở cổng 3100)
-          host: 'http://localhost:3100', 
-          // Labels quan trọng để nhóm log trong Loki
-          labels: { app: 'nestjs-film-api', env: process.env.NODE_ENV || 'development' },
+          host: 'http://localhost:3100',  // Host Loki server đã chạy trong docker-compose 
+          labels: { app: 'nestjs-film-api', env: process.env.NODE_ENV || 'development' }, // Labels để nhóm log trong Loki (rất quan trọng)
           json: true,
-          // Sử dụng JSON format để Loki dễ dàng phân tích
-          format: winston.format.json(), 
+          format: winston.format.json(), // Sử dụng JSON format để Loki dễ dàng phân tích
           level: 'info', // Gửi tất cả log từ level 'info' trở lên
         }),
       ],
