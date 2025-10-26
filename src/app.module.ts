@@ -1,6 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FilmModule } from './film/film.module';
+import { WinstonModule } from 'nest-winston';
+import * as winston from 'winston';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { LoggingInterceptor } from './common/interceptors/logging';
+import LokiTransport from 'winston-loki';
 
 @Module({
   imports: [
@@ -14,9 +19,42 @@ import { FilmModule } from './film/film.module';
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: false,
     }),
+    WinstonModule.forRoot({
+      transports: [
+        new winston.transports.File({
+          dirname: 'logs',                    // thư mục chứa log
+          filename: 'app.log.csv',            // file CSV
+          level: 'info',                      // chỉ ghi log >= info
+          maxsize: 20 * 1024 * 1024,          // giới hạn 20MB
+          maxFiles: 1,                        // chỉ 1 file
+          tailable: true,                     // tự xoay vòng
+          format: winston.format.combine(
+            winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+            winston.format.printf(({ timestamp, message }) => {
+              return `${timestamp},${message}`; // format CSV
+            }),
+          ),
+        }),
+        new LokiTransport({
+          // Host này là địa chỉ Loki server (sẽ chạy ở cổng 3100)
+          host: 'http://localhost:3100', 
+          // Labels quan trọng để nhóm log trong Loki
+          labels: { app: 'nestjs-film-api', env: process.env.NODE_ENV || 'development' },
+          json: true,
+          // Sử dụng JSON format để Loki dễ dàng phân tích
+          format: winston.format.json(), 
+          level: 'info', // Gửi tất cả log từ level 'info' trở lên
+        }),
+      ],
+    }),
     FilmModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+  ],
 })
 export class AppModule {}
