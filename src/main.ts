@@ -9,7 +9,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.enableCors();
 
-  // ✅ Swagger Configuration
+  // Swagger Configuration
   const config = new DocumentBuilder()
     .setTitle('Film API')
     .setDescription('NestJS CRUD API for Films')
@@ -21,9 +21,7 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   await app.listen(3000);
-  console.log(`🚀 Server is running on http://localhost:3000`);
-  console.log(`📘 Swagger docs at http://localhost:3000/api`);
+  console.log(`Server is running on http://localhost:3000`);
+  console.log(`Swagger docs at http://localhost:3000/api`);
 }
 bootstrap();
-
-// test commit push
