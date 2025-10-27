@@ -159,32 +159,3 @@ curl -X POST http://localhost:3000/public/film \
 > `AuthService` hiện chỉ mock sẵn hai user:
 > `admin/password123` và `john/password456`.
 > Trong môi trường production, thông tin tài khoản user sẽ được lưu trữ trên database.
-
----
-
-### 5. Kiểm thử nhanh (Smoke Tests)
-
-1. **Kiểm tra Internal API key**
-
-   ```bash
-   curl -I -s -X GET http://localhost:3000/internal/film \
-     -H "x-api-key: ${INTERNAL_API_KEY}"
-   ```
-
-2. **Kiểm tra Partner API key**
-
-   ```bash
-   curl -I -s -X GET http://localhost:3000/partner/film \
-     -H "x-api-key: partner-key-abc"
-   ```
-
-3. **Kiểm tra đăng nhập và endpoint Public**
-
-   ```bash
-   TOKEN=$(curl -s -X POST http://localhost:3000/auth/login \
-     -H "Content-Type: application/json" \
-     -d '{"username":"admin","password":"password123"}' | jq -r .accessToken)
-
-   curl -I -s -X GET http://localhost:3000/public/film \
-     -H "Authorization: Bearer $TOKEN"
-   ```
